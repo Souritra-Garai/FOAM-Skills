@@ -7,6 +7,13 @@ description: Helps set up, smoke-test, and validate OpenFOAM v14 cases and dicti
 
 Local install: `/opt/openfoam14`. User run directory: `~/OpenFOAM/sgarai-14`.
 
+## Setup on a new machine
+
+Run `scripts/setup-permissions.sh <openfoam_install_dir> <skill_dir> <run_dir>`
+once to merge no-prompt Claude Code permissions into `~/.claude/settings.json`:
+read-only on the OpenFOAM install dir, full read/write on the skill dir and
+the run dir. Safe to re-run; merges without touching unrelated settings.
+
 This skill is a pointer index, not a copy of OpenFOAM's docs or source. Read the
 relevant reference file below only when the task needs it — don't load all of them.
 
