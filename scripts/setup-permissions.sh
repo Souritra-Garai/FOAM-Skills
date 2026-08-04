@@ -8,6 +8,9 @@
 # touching any other keys already in that file. Safe to re-run — rules are
 # de-duplicated.
 #
+# Also symlinks the skill dir into ~/.claude/skills/openfoam-v14 so Claude
+# Code actually discovers and loads it — permissions alone don't do that.
+#
 # Usage:
 #   setup-permissions.sh <openfoam_install_dir> <skill_dir> <run_dir>
 #
@@ -36,6 +39,23 @@ done
 if ! command -v python3 >/dev/null 2>&1; then
   echo "Error: python3 is required for safe JSON merging but was not found." >&2
   exit 1
+fi
+
+SKILLS_DIR="$HOME/.claude/skills"
+SKILL_LINK="$SKILLS_DIR/openfoam-v14"
+mkdir -p "$SKILLS_DIR"
+if [ -L "$SKILL_LINK" ]; then
+  # Already a symlink — repoint it if it's stale, otherwise leave it.
+  if [ "$(readlink "$SKILL_LINK")" != "$SKILL_DIR" ]; then
+    ln -sfn "$SKILL_DIR" "$SKILL_LINK"
+    echo "Repointed existing symlink $SKILL_LINK -> $SKILL_DIR"
+  fi
+elif [ -e "$SKILL_LINK" ]; then
+  echo "Warning: $SKILL_LINK already exists and is not a symlink — leaving it untouched." >&2
+  echo "         Claude Code may not be loading the skill from $SKILL_DIR." >&2
+else
+  ln -s "$SKILL_DIR" "$SKILL_LINK"
+  echo "Linked $SKILL_LINK -> $SKILL_DIR"
 fi
 
 SETTINGS_FILE="$HOME/.claude/settings.json"
