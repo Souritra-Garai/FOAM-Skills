@@ -28,6 +28,8 @@ relevant reference file below only when the task needs it — don't load all of 
   or boundary condition.
 - `reference/case_setup.md` — case directory structure (0/, constant/, system/),
   what each file controls, minimal viable case checklist.
+- `reference/learnings.md` — scratch pad of things learned mid-session, not
+  yet triaged into the files above.
 
 ## Workflow
 
@@ -38,5 +40,6 @@ relevant reference file below only when the task needs it — don't load all of 
 3. For source-structure questions, use `source_index.md` as a map, then grep
    the actual source under `/opt/openfoam14` rather than guessing class names.
 4. When new, reusable knowledge is learned during a session (a gotcha, a class
-   location, a working pattern), propose adding it to the relevant reference
-   file rather than losing it at the end of the conversation.
+   location, a working pattern), propose appending it to `reference/learnings.md`
+   with today's date rather than losing it — don't stop to figure out which
+   module doc it belongs in. That triage happens later, separately.
