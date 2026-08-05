@@ -28,6 +28,9 @@ relevant reference file below only when the task needs it — don't load all of 
   or boundary condition.
 - `reference/case_setup.md` — case directory structure (0/, constant/, system/),
   what each file controls, minimal viable case checklist.
+- `reference/fv_models.md` — fvModel source terms (`semiImplicitSource`
+  math/dimensions, Su-only vs. Sp-relaxation forcing behavior) and the v14
+  `cellZone`/zoneGenerator mechanism.
 - `reference/learnings.md` — scratch pad of things learned mid-session, not
   yet triaged into the files above.
 
@@ -43,3 +46,6 @@ relevant reference file below only when the task needs it — don't load all of 
    location, a working pattern), propose appending it to `reference/learnings.md`
    with today's date rather than losing it — don't stop to figure out which
    module doc it belongs in. That triage happens later, separately.
+5. When triaging `learnings.md`: if an entry is substantial and self-contained
+   enough to be its own topic (like `fv_models.md`), give it a new reference
+   file rather than forcing it into an existing one — then list it above.
