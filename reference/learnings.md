@@ -21,6 +21,56 @@ silently gives wrong pressure at inflow/outflow patches in incompressible
 solvers. Caught during pitzDaily smoke test.
 -->
 
+## 2026-08-06
+User's (Souritra's) house dictionary formatting style, observed across
+`JiCF-BC/counterFlowFlame2D`. Worth matching when hand-writing or
+programmatically patching a case for them — they're precise about it:
+- **Tabs, not spaces**, everywhere, including between a key and its value —
+  not space-aligned columns. Standard OpenFOAM header banner
+  (`/*---...---*\` + version comment block) kept verbatim on every file.
+- One entry per line, **blank line between every top-level entry/sub-block**
+  (`dim {...}` then blank then `num {...}` then blank then
+  `factor_velocity ...;`, etc.) — dictionaries read as loosely spaced
+  paragraphs, not packed.
+- Inline comments are a tab after the `;`, used specifically to name a unit
+  or explain a non-obvious derived value (`factor_nozzle 14.58; // Nozzle
+  area ratio: inlet / outlet`), not for restating the obvious.
+- File always ends with exactly **two blank lines then the closing banner**
+  (`// ****...**** //`) — consistent even in short macro files with no
+  content-relevant reason for the gap.
+- `system/controlDict` additionally uses mid-file
+  `// * * * ... * * * //` divider comments to group related entries
+  (solver choice / time control / write control) — a heavier-weight
+  separator reserved for logically distinct groups within one file, not used
+  in every file.
+
+## 2026-08-06
+Macro modularization pattern (`JiCF-BC/counterFlowFlame2D/macros/`): exactly
+three small dicts, split by *what kind of thing you're changing* rather than
+by which OpenFOAM file consumes them — `inletConditions` (physics: nozzle +
+crossflow streams, pressure), `box` (mesh geometry `dim`/`num` + velocity
+scale factors), `tolerances` (`linear_solver`/`convergence`). Every other
+file in `0/`/`system/`/`constant/` references these via
+`${${FOAM_CASE}/macros/<file>!<key>}` (nested keys via `!parent/child`, e.g.
+`!nozzle/V`) instead of being hand-edited, so one macro edit propagates
+everywhere it's used. `#calc "..."` wraps any arithmetic combination of two
+macro refs (negation, `0.5 * dim/y`, multiplying two factors together) since
+`${...}` substitution alone is textual, not arithmetic. Good pattern to
+reach for whenever a case needs the same handful of parameters exposed
+cleanly to outside tooling (a notebook, a sweep driver) without the tooling
+touching `0/`/`system/`/`constant/` directly — keeps the diff of a
+parameter sweep to just the 3 macro files.
+
+Companion Python-side technique making this durable under repeated
+programmatic edits (`JiCF-BC/modules/FOAM_Dictionary.py`): a macro file is
+only fully re-serialized (`formatDictionary`) the first time it's created;
+every subsequent write locates just the changed value's byte span
+(`tokenizeWithSpans`/`parseTokenSpans`) and patches that span in place
+(`patchText`), leaving every comment/blank-line/alignment choice above
+untouched. Worth reaching for this span-patch approach over
+read-dict/mutate/re-serialize-whole-file whenever a user cares about hand
+formatting surviving automated edits.
+
 ## 2026-08-18 — thermophysicalModels / JANAF / mixture rules
 
 - **General JANAF database ships in `etc/`**, not just per-tutorial: raw
