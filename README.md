@@ -20,6 +20,7 @@ OpenFOAM install rather than re-explaining it.
 | `reference/source_index.md` | Map of the OpenFOAM v14 source tree (`src/`, `applications/`) |
 | `reference/case_setup.md` | Case directory structure (`0/`, `constant/`, `system/`) |
 | `reference/fv_models.md` | fvModel source terms (`semiImplicitSource`), `cellZone`/zoneGenerator |
+| `reference/amr.md` | AMR (`fvMeshTopoChangers::refiner`/`hexRef8`) dict shape, the `empty`-patch corruption gotcha, and AMR-vs-parallel breakage |
 | `reference/learnings.md` | Scratch pad — mid-session findings not yet triaged into a proper doc |
 | `scripts/setup-permissions.sh` | One-shot setup for a new machine (see below) |
 

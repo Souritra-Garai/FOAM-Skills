@@ -31,6 +31,10 @@ relevant reference file below only when the task needs it — don't load all of 
 - `reference/fv_models.md` — fvModel source terms (`semiImplicitSource`
   math/dimensions, Su-only vs. Sp-relaxation forcing behavior) and the v14
   `cellZone`/zoneGenerator mechanism.
+- `reference/amr.md` — `fvMeshTopoChangers::refiner` (hexRef8) AMR dict
+  shape, toggling it off without losing the config, the `empty`-patch
+  corruption gotcha and its `cyclic`-patch workaround, and why AMR + a
+  decomposed (parallel) run crashes when that workaround is in play.
 - `reference/learnings.md` — scratch pad of things learned mid-session, not
   yet triaged into the files above.
 
