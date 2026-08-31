@@ -129,3 +129,94 @@ formatting surviving automated edits.
   (older-version convention) — confirmed in both a v14 tutorial and a v12-era
   case still running fine under v14, so the case-level format is stable
   across this rename.
+
+## 2026-08-26 — heat flux through a non-`wall` patch, via a `coded` functionObject
+
+- **`wallHeatFlux` (builtin functionObject) only works on `wall`-type
+  patches** — its `read()` explicitly filters `patchSet_` down to
+  `isA<wallPolyPatch>` and warns/skips anything else
+  (`src/functionObjects/field/wallHeatFlux/wallHeatFlux.C`). No dict option
+  to disable this. If the boundary you want conductive heat flux through is
+  a plain `patch` (e.g. an inlet/outlet with real mass throughflow, so
+  relabeling it `wall` would be physically misleading), `wallHeatFlux` is a
+  dead end regardless of dict settings.
+- **Fix: `thermophysicalTransportModel::q(patchi)`** (the exact field
+  `wallHeatFlux` itself uses internally) works on *any* patch index — the
+  wall restriction is purely `wallHeatFlux`'s own application-level filter,
+  not a property of the underlying field. Returns `[W/m^2]`, **positive =
+  flux out of the domain** along the outward face normal (confirmed from
+  `unityLewisFourier::q() = -alphaEff*snGrad(he)`: a colder boundary than
+  the interior gives positive/outward q). Sum `q(patchi) * mesh.boundary()
+  [patchi].magSf()` over the patch for total heat flow in Watts. Object is
+  registered under the plain name `"thermophysicalTransport"`
+  (`thermophysicalTransportModel::typeName`, looked up via
+  `mesh.lookupObject<thermophysicalTransportModel>("thermophysicalTransport")`
+  for a single-phase/no-group case).
+- **Wrote this as a `type coded;` functionObject** (`libs
+  ("libutilityFunctionObjects.so");`, `codeInclude`/`codeOptions`/`codeLibs`/
+  `codeExecute` blocks — same dynamicCode compile pipeline as the `#calc`
+  expressions already used elsewhere in dictionaries) rather than a real
+  compiled functionObject class, since it only needed ~20 lines. Full
+  working example: `JiCF-BC/counterFlowFlame2D/system/functions`
+  (`heatFluxPorts`).
+- **Three API mismatches hit while smoke-testing it** (this install's
+  `fvMesh`/`polyBoundaryMesh`/`Time` API differs from what `wallHeatFlux.C`'s
+  own source patterns would suggest — each caused a real compile error,
+  caught via the smoke-test protocol, not guessed):
+  - `mesh.poly().boundary()`, **not** `mesh.boundaryMesh()` (`fvMesh` has no
+    `boundaryMesh()` member in this version — `wallHeatFlux.C` itself uses
+    `mesh_.poly().boundary()`, worth pattern-matching from source instead of
+    assuming the more commonly-documented older API).
+  - `polyBoundaryMesh::findIndex(name)`, **not** `.findPatchID(name)` (the
+    latter doesn't exist on this class here).
+  - `Time::timeName()` takes a **required** `scalar` argument in this
+    version (`static word timeName(const scalar, int precision = ...)`) —
+    there is no bare no-arg instance overload; call it as
+    `mesh.time().timeName(mesh.time().value())`.
+  - Link step separately needs `-lthermophysicalTransportModel` (**singular**
+    — the abstract interface library) in `codeLibs`, not a model-specific
+    plural one (`-lthermophysicalTransportModels` doesn't exist as a real
+    `.so`; the concrete per-formulation libraries are named things like
+    `libfluidMulticomponentThermophysicalTransportModels.so`, none of which
+    are needed just to call virtual interface methods on an already-
+    constructed model instance).
+- Related, not yet used: OpenFOAM ships a standalone adiabatic-flame-
+  temperature utility (`applications/utilities/thermophysical/
+  adiabaticFlameT/`, see the 2026-08-18 entry above) — worth trying instead
+  of a from-scratch Python JANAF calculation next time that specific number
+  is needed, though the Python route (independent of the OpenFOAM build/
+  install, easy to adapt for a non-standard preheat/composition) worked fine
+  here too.
+
+## 2026-08-26 — "finished" vs "converged": `residualControl` on a refined flame mesh
+
+From tuning `JiCF-BC/counterFlowFlame2D` (infinitely-fast-chemistry opposed-jet
+flame). All three points generalise to any PIMPLE run whose steady state is a
+sharp, mesh-resolved feature.
+
+- **Refining the mesh can break `residualControl`'s auto-stop, not just slow
+  it.** A reaction sheet resolved onto ~1 cell "flickers" between cells each
+  timestep, so `U`/`T` residuals settle into a bounded noise floor (~0.05–0.4
+  here) and never decay to a tight tolerance. The run is physically converged
+  (position/temperature stationary) but the residual criterion never fires.
+- **Loosening the residual tolerance to compensate is the wrong fix** — the
+  same loosened threshold is also satisfied trivially by an early,
+  still-undeveloped timestep (PIMPLE's outer-corrector residual collapses
+  several orders of magnitude by iteration ~3 in *every* timestep, including
+  the initial-condition ones). Observed a "converged" false-positive after 9
+  timesteps at `t=2.5e-5 s`. No single scalar threshold separates "really
+  done" from "hasn't started" once the genuine noise floor overlaps what the
+  pre-ignition transient hits.
+- **Working pattern:** keep the tight `residualControl` (it never
+  false-positives — it just may never fire), and add a fixed `endTime`
+  backstop sized from where a *physical* observable actually stops moving
+  (flame position from a sampled centreline, `Qdot` peak location), not from a
+  residual. Then check which criterion actually stopped the run — grep the log
+  for the solver's own `"PIMPLE solution converged"` banner; absent ⇒ it hit
+  `endTime`, which is a valid stop but a different claim. A finished run and a
+  converged run are not the same thing on a refined mesh.
+- Aside (case-setup, less general): on a graded blockMesh the Courant-limiting
+  cells for a counterflow flame sit **at the flame**, not the ports —
+  thermal-expansion-accelerated gas there can exceed both cold inlet speeds —
+  so grade the fine band onto the (measured) stagnation-plane/flame region,
+  not the ports.
