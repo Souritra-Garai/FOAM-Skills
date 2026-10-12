@@ -1,6 +1,6 @@
 # OpenFOAM v14 source map
 
-Install root: `/opt/openfoam14`. Confirm any path below still exists before
+Install root: `<OPENFOAM_DIR>` (resolve it per `SKILL.md`). Confirm any path below still exists before
 relying on it — the source tree changes between versions (v14 restructured
 solvers significantly vs. older OpenFOAM releases: most physics now lives
 under `applications/modules/`, run through the single `foamRun` binary,
@@ -29,17 +29,17 @@ versions).
 
 ## Finding things in source
 
-- **A boundary condition's implementation**: `find /opt/openfoam14/src/finiteVolume/fields/fvPatchFields -iname "*<name>*"`
+- **A boundary condition's implementation**: `find <OPENFOAM_DIR>/src/finiteVolume/fields/fvPatchFields -iname "*<name>*"`
 - **A runtime-selectable type (fvModel, BC, turbulence model, etc.)**: search
   for its `addToRunTimeSelectionTable` registration —
   ```bash
-  grep -rl "addToRunTimeSelectionTable.*<baseClass>.*<typeName>" /opt/openfoam14/src
+  grep -rl "addToRunTimeSelectionTable.*<baseClass>.*<typeName>" <OPENFOAM_DIR>/src
   ```
 - **Which module a solver keyword corresponds to**: `applications/modules/<name>`
   — check its `createFields.H`/`.C` for the physics it wires up, and match
   against `tutorials/<name>` for example case setups.
 - **A class's header**: OpenFOAM classes are one class per file with a
-  matching name — `find /opt/openfoam14/src -iname "<ClassName>.H"`.
+  matching name — `find <OPENFOAM_DIR>/src -iname "<ClassName>.H"`.
 
 ## Notes / gotchas (add to as discovered)
 

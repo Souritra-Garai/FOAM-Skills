@@ -60,7 +60,7 @@ overkill.
   condition or fvModel type name is registered) by searching the source
   rather than guessing:
   ```bash
-  grep -rl "addToRunTimeSelectionTable" /opt/openfoam14/src | xargs grep -l "<typeName>"
+  grep -rl "addToRunTimeSelectionTable" <OPENFOAM_DIR>/src | xargs grep -l "<typeName>"
   ```
   See `source_index.md` for where these tables typically live per module.
 - If the entry can only be validated in context (e.g. a boundary condition

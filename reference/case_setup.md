@@ -1,6 +1,6 @@
 # OpenFOAM v14 case directory structure
 
-Verified against `/opt/openfoam14/tutorials/incompressibleFluid/planarCouette`
+Verified against `<OPENFOAM_DIR>/tutorials/incompressibleFluid/planarCouette`
 (a minimal v14 case). Structure may vary by module — cross-check against a
 tutorial under `applications/modules/<name>`'s matching `tutorials/<name>`
 directory before assuming a file is required/optional for a given solver.
