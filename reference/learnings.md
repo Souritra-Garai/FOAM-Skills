@@ -220,3 +220,18 @@ sharp, mesh-resolved feature.
   thermal-expansion-accelerated gas there can exceed both cold inlet speeds —
   so grade the fine band onto the (measured) stagnation-plane/flame region,
   not the ports.
+
+## 2026-09-21
+`OptimisationSwitches { fileHandler collated; }` inside a case's
+`system/controlDict` does NOT switch runtime I/O from uncollated to
+collated — `decomposePar`/`foamRun`/etc. still print `I/O : uncollated` in
+their startup banner. Root cause: the file handler is selected during
+process bootstrap, before the case's `system/controlDict` is even parsed
+(chicken-and-egg — a handler is needed to read the dictionary that would
+set the handler). This caused a real HPC run (g-12/T11, 2048 ranks) to
+write ~2000 individual `processorN/` dirs instead of one collated
+`processors2048/`. Fix: supply it before the case dictionary is read, via
+`export FOAM_FILEHANDLER=collated` in the job script's environment, or the
+`-fileHandler collated` command-line flag on `decomposePar`/`foamRun`/etc.
+The case controlDict entry is harmless to keep as documentation but cannot
+do this by itself.
